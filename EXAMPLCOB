@@ -1,0 +1,116 @@
+IDENTIFICATION DIVISION.
+
+       PROGRAM-ID.    EXMPLCOB.
+       AUTHOR.        DOUGLAS JOHNSON.
+       DATE-WRITTEN.  09/04/2025.
+       DATE-COMPILED.
+
+       ENVIRONMENT DIVISION.
+       INPUT-OUTPUT SECTION.
+       FILE-CONTROL.
+
+           SELECT EXAMPLE-FILE ASSIGN TO EXAMFILE.
+           SELECT OUTPUT-FILE  ASSIGN TO OUTFILE.
+
+       DATA DIVISION.
+       FILE SECTION.
+
+       FD  EXAMPLE-FILE
+           RECORDING MODE F.
+
+       01  FINANCIAL-RECORD.
+           05  IN-NAME         PIC X(25).
+           05  IN-DEFAULT-AMT  PIC S9(5)V99.
+           05  IN-DEPT-AMT     PIC S999V99.
+           05  IN-WITH-AMT     PIC S999V99.
+           05  FILLER          PIC X(38).
+
+       FD  OUTPUT-FILE
+           RECORDING MODE F.
+       01  REPORT-RECORD       PIC X(132).
+
+       WORKING-STORAGE SECTION.
+
+       01  EOF-FLAG            PIC X VALUE 'N'.
+
+       01  HEADER-LINE.
+           05                  PIC X(4)  VALUE 'NAME'.
+           05                  PIC X(25) VALUE SPACES.
+           05                  PIC X(14) VALUE 'INITIAL AMOUNT'.
+           05                  PIC X(4)  VALUE SPACES.
+           05                  PIC X(14) VALUE 'DEPOSIT AMOUNT'.
+           05                  PIC X(4)  VALUE SPACES.
+           05                  PIC X(17) VALUE 'WITHDRAWAL AMOUNT'.
+           05                  PIC X(4)  VALUE SPACES.
+           05                  PIC X(12) VALUE 'FINAL AMOUNT'.
+           05                  PIC X(34) VALUE SPACES.
+
+       01  HEADER-LINE2.
+           05                  PIC X(25) VALUE ALL '-'.
+           05                  PIC X(4)  VALUE SPACES.
+           05                  PIC X(14) VALUE ALL '-'.
+           05                  PIC X(4)  VALUE SPACES.
+           05                  PIC X(14) VALUE ALL '-'.
+           05                  PIC X(4)  VALUE SPACES.
+           05                  PIC X(17) VALUE ALL '-'.
+           05                  PIC X(4)  VALUE SPACES.
+           05                  PIC X(12) VALUE ALL '-'.
+           05                  PIC X(34) VALUE SPACES.
+
+
+       01  DETAIL-LINE.
+           05  OUT-NAME         PIC X(25).
+           05                   PIC X(8) VALUE SPACES.
+           05  OUT-DEFAULT-AMT  PIC $$$,$$9.99.
+           05                   PIC X(12) VALUE SPACES.
+           05  OUT-DEPT-AMT     PIC $$9.99.
+           05                   PIC X(15) VALUE SPACES.
+           05  OUT-WITH-AMT     PIC $$9.99.
+           05                   PIC X(5) VALUE SPACES.
+           05  OUT-TOTAL-AMT    PIC $$$$,$$9.99.
+           05                   PIC X(34) VALUE SPACES.
+
+       01  PACKED-FIELDS.
+           05  DEFAULT-AMT      PIC S9(5)V99 PACKED-DECIMAL VALUE 0.
+           05  DEPT-AMT         PIC S999V99  PACKED-DECIMAL VALUE 0.
+           05  WITH-AMT         PIC S999V99  PACKED-DECIMAL VALUE 0.
+           05  TOTAL-AMT        PIC S9(6)V99 PACKED-DECIMAL VALUE 0.
+
+       PROCEDURE DIVISION.
+       0000-MAIN.
+
+           OPEN INPUT EXAMPLE-FILE.
+           OPEN OUTPUT OUTPUT-FILE.
+
+           READ EXAMPLE-FILE AT END MOVE 'Y' TO EOF-FLAG
+           END-READ.
+
+           WRITE REPORT-RECORD FROM HEADER-LINE AFTER 1.
+           WRITE REPORT-RECORD FROM HEADER-LINE2 AFTER 1.
+
+           PERFORM UNTIL EOF-FLAG = 'Y'
+
+                MOVE IN-NAME TO OUT-NAME
+                MOVE IN-DEFAULT-AMT TO DEFAULT-AMT
+                MOVE IN-DEPT-AMT TO DEPT-AMT
+                MOVE IN-WITH-AMT TO WITH-AMT
+
+                COMPUTE TOTAL-AMT = DEFAULT-AMT + DEPT-AMT - WITH-AMT
+                MOVE DEFAULT-AMT TO OUT-DEFAULT-AMT
+                MOVE DEPT-AMT TO OUT-DEPT-AMT
+                MOVE WITH-AMT TO OUT-WITH-AMT
+                MOVE TOTAL-AMT TO OUT-TOTAL-AMT
+
+                WRITE REPORT-RECORD FROM DETAIL-LINE AFTER 2
+                READ EXAMPLE-FILE AT END MOVE 'Y' TO EOF-FLAG
+                END-READ
+
+           END-PERFORM.
+
+           CLOSE EXAMPLE-FILE.
+           CLOSE OUTPUT-FILE.
+
+           MOVE 0 TO RETURN-CODE.
+
+           STOP RUN.
+       0000-EXIT. EXIT.
